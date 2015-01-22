@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+	body {
+		margin: 5% 10%;
+	}
+</style>
+<script>
+
+//Oh Gawd, Why are you looking at the code for this?
+//It's an hacky abomination. You've been warned.
+
+function getRepos(callback) {
+	//GET /users/:username/repos
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", "https://api.github.com/users/uber5001/repos");
+	xhr.onload = function() {callback(xhr.response);};
+	xhr.send();
+}
+//only calls a function after then nth call
+function loadLimit(func, n, preloadCallback, overloadCallback) {
+	return function() {
+		n--;
+		if (n > 0) {
+			if (preloadCallback) preloadCallback(n);
+		} else if (n == 0) {
+			func.apply(null, arguments);
+		} else {
+			if (overloadCallback) overloadCallback(-n);
+		}
+	}
+}
+var onLoad = loadLimit(function() {
+	for (var r in repos) {
+		if (repos[r].has_pages) {
+			repos[r].pages_url = "http://uber5001.github.com/" + repos[r].name
+		}
+	}
+	for (var r in repos) {
+		var repoEl = document.createElement('article');
+			var titleEl = document.createElement('h1');
+				var titleLink = document.createElement('a');
+					titleLink.href = repos[r].html_url;
+					titleLink.textContent = repos[r].name;
+				titleEl.appendChild(titleLink);
+			repoEl.appendChild(titleEl);
+			if (repos[r].pages_url) {
+				var pagesEl = document.createElement('p');
+					var pagesLink = document.createElement('a');
+						pagesLink.href = repos[r].pages_url;
+						pagesLink.textContent = "View on GitHub Pages"
+					pagesEl.appendChild(pagesLink);
+				repoEl.appendChild(pagesEl);
+			}
+			var subtitleEl = document.createElement('p');
+				subtitleEl.classList.add('subtitle');
+				subtitleEl.textContent = repos[r].description;
+			repoEl.appendChild(subtitleEl);
+		document.body.appendChild(repoEl);
+	}
+}, 2);
+window.onload = onLoad;
+var repos;
+getRepos(function(response) {repos = JSON.parse(response); onLoad();});
+</script>
+</head>
+<body>
+	Work In Progress...
+</body>
+</html>
